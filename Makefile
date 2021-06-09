@@ -9,4 +9,4 @@ test:
 	go test -v ./...
 
 start:
-	./start.sh
+	go run cmd/server/main.go
