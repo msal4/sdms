@@ -6,7 +6,7 @@
 
 - Create a `.env` file using `cp .env.example .env` and set `DB_URL`
 
-- Run `make migrate` to run the migrations
+- Run `make migrate-up` to run the migrations
 
 - Run `make test` to run the tests
 
