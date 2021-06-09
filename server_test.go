@@ -16,12 +16,27 @@ type stubStore struct {
 	subjects []sdms.Subject
 }
 
-func (s *stubStore) GetSubjects() []sdms.Subject {
-	return s.subjects
+func (s *stubStore) GetSubjects() ([]sdms.Subject, error) {
+	return s.subjects, nil
 }
 
-func (s *stubStore) AddSubject(subject sdms.Subject) {
-	s.subjects = append(s.subjects, subject)
+func (s *stubStore) AddSubject(subject *sdms.Subject) error {
+	if subject != nil {
+		s.subjects = append(s.subjects, *subject)
+	}
+	return nil
+}
+
+func (s *stubStore) RemoveSubject(id int) error {
+	return nil
+}
+
+func (s *stubStore) UpdateSubject(subject sdms.Subject) error {
+	return nil
+}
+
+func (s *stubStore) GetSubjectByID(id int) (*sdms.Subject, error) {
+	return nil, nil
 }
 
 func TestGETSubjects(t *testing.T) {
@@ -153,23 +168,27 @@ func TestPOSTSubject(t *testing.T) {
 
 		srv.ServeHTTP(res, req)
 
-		if len(store.subjects) != initialSubjectsLength+1 {
-			t.Fatalf("got length of subjects %d, want %d", len(store.subjects), initialSubjectsLength+1)
-		}
-
-		assertHasSubject(t, store, subject)
-
 		assertStatusCode(t, res, http.StatusAccepted)
+
+		assertSubjectsLength(t, store.subjects, initialSubjectsLength+1)
+
+		assertHasSubject(t, store.subjects, subject)
 	})
 
 }
 
-func assertHasSubject(t testing.TB, store *stubStore, want sdms.Subject) {
+func assertSubjectsLength(t testing.TB, s []sdms.Subject, want int) {
+	t.Helper()
+	if len(s) != want {
+		t.Fatalf("got length of subjects %d, want %d", len(s), want)
+	}
+}
+
+func assertHasSubject(t testing.TB, subjects []sdms.Subject, want sdms.Subject) {
 	t.Helper()
 	var found bool
-	for _, s := range store.subjects {
-		if s.Name == want.Name && s.Details == want.Details && s.Lecturer.Name == want.Lecturer.Name &&
-			s.Semester == want.Semester && s.Syllabus == want.Syllabus {
+	for _, s := range subjects {
+		if s.Name == want.Name && s.Details == want.Details && s.Semester == want.Semester && s.Syllabus == want.Syllabus {
 			found = true
 		}
 	}
