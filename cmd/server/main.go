@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -11,12 +12,22 @@ import (
 	"github.com/msal4/sdms"
 )
 
-func main() {
-	err := godotenv.Load("../../.env")
-
-	if err != nil {
-		log.Fatal("Error loading .env file")
+func loadEnv() error {
+	if err := godotenv.Load("../../.env"); err != nil {
+		err = godotenv.Load(".env")
+		if err != nil {
+			return fmt.Errorf("Error loading .env file: %v", err)
+		}
 	}
+
+	return nil
+}
+
+func main() {
+	if err := loadEnv(); err != nil {
+		log.Fatal(err)
+	}
+
 	db, err := sql.Open("postgres", os.Getenv("DB_URL"))
 	if err != nil {
 		log.Fatalf("problem establishing a db connection: %v", err)

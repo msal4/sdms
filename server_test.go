@@ -13,7 +13,8 @@ import (
 )
 
 type stubStore struct {
-	subjects []sdms.Subject
+	subjects  []sdms.Subject
+	lecturers []sdms.Lecturer
 }
 
 func (s *stubStore) GetSubjects() ([]sdms.Subject, error) {
@@ -36,6 +37,29 @@ func (s *stubStore) UpdateSubject(subject sdms.Subject) error {
 }
 
 func (s *stubStore) GetSubjectByID(id int) (*sdms.Subject, error) {
+	return nil, nil
+}
+
+func (s *stubStore) GetLecturers() ([]sdms.Lecturer, error) {
+	return s.lecturers, nil
+}
+
+func (s *stubStore) AddLecturer(lecturer *sdms.Lecturer) error {
+	if lecturer != nil {
+		s.lecturers = append(s.lecturers, *lecturer)
+	}
+	return nil
+}
+
+func (s *stubStore) RemoveLecturer(id int) error {
+	return nil
+}
+
+func (s *stubStore) UpdateLecturer(lecturer sdms.Lecturer) error {
+	return nil
+}
+
+func (s *stubStore) GetLecturerByID(id int) (*sdms.Lecturer, error) {
 	return nil, nil
 }
 

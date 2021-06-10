@@ -90,3 +90,79 @@ func (s *PostgresStore) UpdateSubject(subject Subject) error {
 
 	return nil
 }
+
+func (s *PostgresStore) GetLecturers() ([]Lecturer, error) {
+	rows, err := s.db.Query(`SELECT id, name, image, about, password, subject_id FROM lecturers;`)
+	if err != nil {
+		return nil, fmt.Errorf("error querying lecturers: %v", err)
+	}
+
+	lecturers := []Lecturer{}
+	for rows.Next() {
+		lecturer := Lecturer{
+			Subject: &Subject{},
+		}
+
+		err := rows.Scan(&lecturer.ID, &lecturer.Name, &lecturer.Image, &lecturer.About, &lecturer.Password, &lecturer.Subject.ID)
+		if err != nil {
+			return nil, fmt.Errorf("error while scanning row: %v", err)
+		}
+
+		lecturers = append(lecturers, lecturer)
+	}
+	return lecturers, nil
+}
+
+func (s *PostgresStore) GetLecturerByID(id int) (*Lecturer, error) {
+	row := s.db.QueryRow("SELECT id, name, image, about, password, subject_id FROM lecturers where id = $1", id)
+
+	lecturer := Lecturer{
+		Subject: &Subject{},
+	}
+
+	err := row.Scan(&lecturer.ID, &lecturer.Name, &lecturer.Image, &lecturer.About, &lecturer.Password, &lecturer.Subject.ID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, ErrNotFound
+		}
+		return nil, fmt.Errorf("encountered error while scanning row: %v", err)
+	}
+
+	return &lecturer, nil
+}
+
+func (s *PostgresStore) AddLecturer(lecturer *Lecturer) error {
+	if lecturer.Subject == nil {
+		lecturer.Subject = &Subject{}
+	}
+	row := s.db.QueryRow(`INSERT INTO lecturers (name, image, about, password, subject_id) VALUES ($1, $2, $3, $4, $5) RETURNING id;`,
+		lecturer.Name, lecturer.Image, lecturer.About, lecturer.Password, lecturer.Subject.ID)
+
+	if err := row.Scan(&lecturer.ID); err != nil {
+		return fmt.Errorf("could not assign id to lecturer: %v", err)
+	}
+
+	return nil
+}
+
+func (s *PostgresStore) RemoveLecturer(id int) error {
+	_, err := s.db.Exec("DELETE FROM lecturers WHERE id = $1;", id)
+	if err != nil {
+		return fmt.Errorf("problem deleting row: %v", err)
+	}
+
+	return nil
+}
+
+func (s *PostgresStore) UpdateLecturer(lecturer Lecturer) error {
+	if lecturer.Subject == nil {
+		lecturer.Subject = &Subject{}
+	}
+	_, err := s.db.Exec(`UPDATE lecturers SET name = $1, image = $2, about = $3, password = $4, subject_id = $5 WHERE id = $6;`,
+		lecturer.Name, lecturer.Image, lecturer.About, lecturer.Password, lecturer.Subject.ID, lecturer.ID)
+	if err != nil {
+		return fmt.Errorf("problem updating row: %v", err)
+	}
+
+	return nil
+}
