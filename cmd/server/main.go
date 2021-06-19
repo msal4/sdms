@@ -14,8 +14,7 @@ import (
 
 func loadEnv() error {
 	if err := godotenv.Load("../../.env"); err != nil {
-		err = godotenv.Load(".env")
-		if err != nil {
+		if err := godotenv.Load(".env"); err != nil {
 			return fmt.Errorf("Error loading .env file: %v", err)
 		}
 	}
@@ -35,6 +34,8 @@ func main() {
 
 	store := sdms.NewPostgresStore(db)
 	server := sdms.NewServer(store)
+
+	log.Println("Running on http://0.0.0.0:5000")
 
 	log.Fatal(http.ListenAndServe(":5000", server))
 }

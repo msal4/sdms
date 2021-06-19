@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
 
@@ -60,21 +61,23 @@ func NewServer(store AppStore) *Server {
 
 	router := mux.NewRouter()
 
+	apiRouter := router.PathPrefix("/api").Subrouter()
+
 	// subjects
-	router.Handle("/subjects", http.HandlerFunc(s.handleSubjects)).Methods(http.MethodGet)
-	router.Handle("/subjects", http.HandlerFunc(s.handleAddSubject)).Methods(http.MethodPost)
-	router.Handle("/subjects/{id:[0-9]+}", http.HandlerFunc(s.handleGetSubjectByID)).Methods(http.MethodGet)
-	router.Handle("/subjects/{id:[0-9]+}", http.HandlerFunc(s.handleRemoveSubject)).Methods(http.MethodDelete)
-	router.Handle("/subjects/{id:[0-9]+}", http.HandlerFunc(s.handleUpdateSubject)).Methods(http.MethodPut)
+	apiRouter.Handle("/subjects", http.HandlerFunc(s.handleSubjects)).Methods(http.MethodGet)
+	apiRouter.Handle("/subjects", http.HandlerFunc(s.handleAddSubject)).Methods(http.MethodPost)
+	apiRouter.Handle("/subjects/{id:[0-9]+}", http.HandlerFunc(s.handleGetSubjectByID)).Methods(http.MethodGet)
+	apiRouter.Handle("/subjects/{id:[0-9]+}", http.HandlerFunc(s.handleRemoveSubject)).Methods(http.MethodDelete)
+	apiRouter.Handle("/subjects/{id:[0-9]+}", http.HandlerFunc(s.handleUpdateSubject)).Methods(http.MethodPut)
 
 	// lecturers
-	router.Handle("/lecturers", http.HandlerFunc(s.handleLecturers)).Methods(http.MethodGet)
-	router.Handle("/lecturers", http.HandlerFunc(s.handleAddLecturer)).Methods(http.MethodPost)
-	router.Handle("/lecturers/{id:[0-9]+}", http.HandlerFunc(s.handleGetLecturerByID)).Methods(http.MethodGet)
-	router.Handle("/lecturers/{id:[0-9]+}", http.HandlerFunc(s.handleRemoveLecturer)).Methods(http.MethodDelete)
-	router.Handle("/lecturers/{id:[0-9]+}", http.HandlerFunc(s.handleUpdateLecturer)).Methods(http.MethodPut)
+	apiRouter.Handle("/lecturers", http.HandlerFunc(s.handleLecturers)).Methods(http.MethodGet)
+	apiRouter.Handle("/lecturers", http.HandlerFunc(s.handleAddLecturer)).Methods(http.MethodPost)
+	apiRouter.Handle("/lecturers/{id:[0-9]+}", http.HandlerFunc(s.handleGetLecturerByID)).Methods(http.MethodGet)
+	apiRouter.Handle("/lecturers/{id:[0-9]+}", http.HandlerFunc(s.handleRemoveLecturer)).Methods(http.MethodDelete)
+	apiRouter.Handle("/lecturers/{id:[0-9]+}", http.HandlerFunc(s.handleUpdateLecturer)).Methods(http.MethodPut)
 
-	s.Handler = router
+	s.Handler = handlers.CORS()(router)
 
 	return s
 }
