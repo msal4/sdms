@@ -92,18 +92,15 @@ func (s *PostgresStore) UpdateSubject(subject Subject) error {
 }
 
 func (s *PostgresStore) GetLecturers() ([]Lecturer, error) {
-	rows, err := s.db.Query(`SELECT id, name, image, about, password, subject_id FROM lecturers;`)
+	rows, err := s.db.Query(`SELECT id, name, image, about, password FROM lecturers;`)
 	if err != nil {
 		return nil, fmt.Errorf("error querying lecturers: %v", err)
 	}
 
 	lecturers := []Lecturer{}
 	for rows.Next() {
-		lecturer := Lecturer{
-			Subject: &Subject{},
-		}
-
-		err := rows.Scan(&lecturer.ID, &lecturer.Name, &lecturer.Image, &lecturer.About, &lecturer.Password, &lecturer.Subject.ID)
+		var lecturer Lecturer
+		err := rows.Scan(&lecturer.ID, &lecturer.Name, &lecturer.Image, &lecturer.About, &lecturer.Password)
 		if err != nil {
 			return nil, fmt.Errorf("error while scanning row: %v", err)
 		}
@@ -114,13 +111,11 @@ func (s *PostgresStore) GetLecturers() ([]Lecturer, error) {
 }
 
 func (s *PostgresStore) GetLecturerByID(id int) (*Lecturer, error) {
-	row := s.db.QueryRow("SELECT id, name, image, about, password, subject_id FROM lecturers where id = $1", id)
+	row := s.db.QueryRow("SELECT id, name, image, about, password FROM lecturers where id = $1", id)
 
-	lecturer := Lecturer{
-		Subject: &Subject{},
-	}
+	var lecturer Lecturer
 
-	err := row.Scan(&lecturer.ID, &lecturer.Name, &lecturer.Image, &lecturer.About, &lecturer.Password, &lecturer.Subject.ID)
+	err := row.Scan(&lecturer.ID, &lecturer.Name, &lecturer.Image, &lecturer.About, &lecturer.Password)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, ErrNotFound
@@ -132,11 +127,8 @@ func (s *PostgresStore) GetLecturerByID(id int) (*Lecturer, error) {
 }
 
 func (s *PostgresStore) AddLecturer(lecturer *Lecturer) error {
-	if lecturer.Subject == nil {
-		lecturer.Subject = &Subject{}
-	}
-	row := s.db.QueryRow(`INSERT INTO lecturers (name, image, about, password, subject_id) VALUES ($1, $2, $3, $4, $5) RETURNING id;`,
-		lecturer.Name, lecturer.Image, lecturer.About, lecturer.Password, lecturer.Subject.ID)
+	row := s.db.QueryRow(`INSERT INTO lecturers (name, image, about, password) VALUES ($1, $2, $3, $4) RETURNING id;`,
+		lecturer.Name, lecturer.Image, lecturer.About, lecturer.Password)
 
 	if err := row.Scan(&lecturer.ID); err != nil {
 		return fmt.Errorf("could not assign id to lecturer: %v", err)
@@ -155,13 +147,48 @@ func (s *PostgresStore) RemoveLecturer(id int) error {
 }
 
 func (s *PostgresStore) UpdateLecturer(lecturer Lecturer) error {
-	if lecturer.Subject == nil {
-		lecturer.Subject = &Subject{}
-	}
-	_, err := s.db.Exec(`UPDATE lecturers SET name = $1, image = $2, about = $3, password = $4, subject_id = $5 WHERE id = $6;`,
-		lecturer.Name, lecturer.Image, lecturer.About, lecturer.Password, lecturer.Subject.ID, lecturer.ID)
+	_, err := s.db.Exec(`UPDATE lecturers SET name = $1, image = $2, about = $3, password = $4 WHERE id = $5;`,
+		lecturer.Name, lecturer.Image, lecturer.About, lecturer.Password, lecturer.ID)
 	if err != nil {
 		return fmt.Errorf("problem updating row: %v", err)
+	}
+
+	return nil
+}
+func (s *PostgresStore) GetAnnouncements() ([]Announcement, error) {
+	rows, err := s.db.Query(`SELECT id, title, image, details FROM announcements;`)
+	if err != nil {
+		return nil, fmt.Errorf("error querying announcements: %v", err)
+	}
+
+	announcements := []Announcement{}
+	for rows.Next() {
+		var announcement Announcement
+		err := rows.Scan(&announcement.ID, &announcement.Title, &announcement.Image, &announcement.Details)
+		if err != nil {
+			return nil, fmt.Errorf("error while scanning row: %v", err)
+		}
+
+		announcements = append(announcements, announcement)
+	}
+	return announcements, nil
+}
+
+func (s *PostgresStore) AddAnnouncement(announcement *Announcement) error {
+	row := s.db.QueryRow(`INSERT INTO announcements (title, image, details) VALUES ($1, $2, $3) RETURNING id;`,
+		announcement.Title, announcement.Image, announcement.Details)
+
+	if err := row.Scan(&announcement.ID); err != nil {
+		return fmt.Errorf("could not assign id to announcement: %v", err)
+	}
+
+	return nil
+}
+
+func (s *PostgresStore) RemoveAnnouncement(id int) error {
+	_, err := s.db.Exec("DELETE FROM announcements WHERE id = $1;", id)
+	if err != nil {
+		return fmt.Errorf("problem deleting row: %v", err)
 	}
 
 	return nil

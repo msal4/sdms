@@ -16,6 +16,13 @@ const (
 	SecondSemester
 )
 
+const (
+	FirstStage = iota + 1
+	SecondStage
+	ThirdStage
+	FourthStage
+)
+
 type Subject struct {
 	ID       int
 	Name     string
@@ -32,23 +39,31 @@ type Lecturer struct {
 	Image    string
 	Password string
 	About    string
-	Subject  *Subject
+}
+
+type Announcement struct {
+	ID       int
+	Title     string
+	Image    string
+	Details    string
 }
 
 type AppStore interface {
-	// Subject
 	GetSubjects() ([]Subject, error)
 	AddSubject(*Subject) error
 	UpdateSubject(Subject) error
 	GetSubjectByID(id int) (*Subject, error)
 	RemoveSubject(id int) error
 
-	// Lecturer
 	GetLecturers() ([]Lecturer, error)
 	AddLecturer(*Lecturer) error
 	UpdateLecturer(Lecturer) error
 	GetLecturerByID(id int) (*Lecturer, error)
 	RemoveLecturer(id int) error
+
+	GetAnnouncements() ([]Announcement, error)
+	AddAnnouncement(*Announcement) error
+	RemoveAnnouncement(id int) error
 }
 
 type Server struct {
@@ -76,6 +91,10 @@ func NewServer(store AppStore) *Server {
 	apiRouter.Handle("/lecturers/{id:[0-9]+}", http.HandlerFunc(s.handleGetLecturerByID)).Methods(http.MethodGet)
 	apiRouter.Handle("/lecturers/{id:[0-9]+}", http.HandlerFunc(s.handleRemoveLecturer)).Methods(http.MethodDelete)
 	apiRouter.Handle("/lecturers/{id:[0-9]+}", http.HandlerFunc(s.handleUpdateLecturer)).Methods(http.MethodPut)
+
+	apiRouter.Handle("/announcements", http.HandlerFunc(s.handleAnnouncements)).Methods(http.MethodGet)
+	apiRouter.Handle("/announcements", http.HandlerFunc(s.handleAddAnnouncement)).Methods(http.MethodPost)
+	apiRouter.Handle("/announcements/{id:[0-9]+}", http.HandlerFunc(s.handleRemoveAnnouncement)).Methods(http.MethodDelete)
 
 	s.Handler = handlers.CORS()(router)
 
@@ -255,6 +274,52 @@ func (s *Server) handleUpdateLecturer(w http.ResponseWriter, req *http.Request) 
 	lecturer.ID = id
 
 	if err = s.store.UpdateLecturer(lecturer); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+}
+
+func (s *Server) handleAnnouncements(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("content-type", "application/json")
+
+	announcements, err := s.store.GetAnnouncements()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if err = json.NewEncoder(w).Encode(announcements); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+}
+
+func (s *Server) handleAddAnnouncement(w http.ResponseWriter, req *http.Request) {
+	var announcement Announcement
+	err := json.NewDecoder(req.Body).Decode(&announcement)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if err = s.store.AddAnnouncement(&announcement); err != nil {
+		fmt.Fprintf(w, "problem adding announcement: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusAccepted)
+}
+
+func (s *Server) handleRemoveAnnouncement(w http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if err = s.store.RemoveAnnouncement(id); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
