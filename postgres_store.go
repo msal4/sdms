@@ -127,8 +127,8 @@ func (s *PostgresStore) GetLecturerByID(id int) (*Lecturer, error) {
 }
 
 func (s *PostgresStore) AddLecturer(lecturer *Lecturer) error {
-	row := s.db.QueryRow(`INSERT INTO lecturers (name, image, about, password) VALUES ($1, $2, $3, $4) RETURNING id;`,
-		lecturer.Name, lecturer.Image, lecturer.About, lecturer.Password)
+	row := s.db.QueryRow(`INSERT INTO lecturers (name, image, about, password, username) VALUES ($1, $2, $3, $4, $5) RETURNING id;`,
+		lecturer.Name, lecturer.Image, lecturer.About, lecturer.Password, lecturer.Username)
 
 	if err := row.Scan(&lecturer.ID); err != nil {
 		return fmt.Errorf("could not assign id to lecturer: %v", err)

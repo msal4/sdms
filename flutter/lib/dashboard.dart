@@ -64,9 +64,7 @@ class _RootState extends State<Root> with TickerProviderStateMixin {
                       child: Text(
                         'جامعه تكنلوجيا المعلومات والاتصالات',
                         style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
+                            color: Colors.white, fontWeight: FontWeight.bold),
                       ),
                     ),
                   )

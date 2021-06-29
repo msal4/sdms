@@ -37,6 +37,7 @@ type Lecturer struct {
 	ID       int
 	Name     string
 	Image    string
+	Username string
 	Password string
 	About    string
 }
