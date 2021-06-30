@@ -57,6 +57,7 @@ type AppStore interface {
 	GetSubjects() ([]Subject, error)
 	AddSubject(*Subject) error
 	UpdateSubject(Subject) error
+	GetSubjectsByLecturerID(id int) ([]Subject, error)
 	GetSubjectByID(id int) (*Subject, error)
 	RemoveSubject(id int) error
 
@@ -91,6 +92,7 @@ func NewServer(store AppStore) *Server {
 	// subjects
 	apiRouter.Handle("/subjects", http.HandlerFunc(s.handleSubjects)).Methods(http.MethodGet)
 	apiRouter.Handle("/subjects", http.HandlerFunc(s.handleAddSubject)).Methods(http.MethodPost)
+	apiRouter.Handle("/subjects/lecturer/{id:[0-9]+}", http.HandlerFunc(s.handleGetSubjectsByLecturerID)).Methods(http.MethodGet)
 	apiRouter.Handle("/subjects/{id:[0-9]+}", http.HandlerFunc(s.handleGetSubjectByID)).Methods(http.MethodGet)
 	apiRouter.Handle("/subjects/{id:[0-9]+}", http.HandlerFunc(s.handleRemoveSubject)).Methods(http.MethodDelete)
 	apiRouter.Handle("/subjects/{id:[0-9]+}", http.HandlerFunc(s.handleUpdateSubject)).Methods(http.MethodPut)
@@ -141,10 +143,29 @@ func (s *Server) handleGetLecturerByUsername(w http.ResponseWriter, req *http.Re
 	fmt.Fprintf(w, string(b))
 }
 
-func (s *Server) handleGetSubjectByID(w http.ResponseWriter, req *http.Request) {
+func (s *Server) handleGetSubjectsByLecturerID(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", "application/json")
 
-	vars := mux.Vars(req)
+	vars := mux.Vars(r)
+	id, _ := strconv.Atoi(vars["id"])
+	subjects, err := s.store.GetSubjectsByLecturerID(id)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if err = json.NewEncoder(w).Encode(subjects); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+
+}
+
+func (s *Server) handleGetSubjectByID(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("content-type", "application/json")
+
+	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
 		fmt.Fprintf(w, "subject id is not valid")
@@ -203,7 +224,7 @@ func (s *Server) handleAddSubject(w http.ResponseWriter, r *http.Request) {
 
 	contents, err := ioutil.ReadAll(syllabusFile)
 	filepath := path.Join(pdfPath, strconv.Itoa(subject.ID)+".pdf")
-	os.WriteFile(filepath, contents, 0666)
+	os.WriteFile(filepath, contents, 0777)
 }
 
 func (s *Server) handleRemoveSubject(w http.ResponseWriter, req *http.Request) {
@@ -368,7 +389,7 @@ func (s *Server) handleAddAnnouncement(w http.ResponseWriter, r *http.Request) {
 
 	contents, err := ioutil.ReadAll(imageFile)
 	filepath := path.Join(imagesPath, strconv.Itoa(announcement.ID)+".png")
-	os.WriteFile(filepath, contents, 0666)
+	os.WriteFile(filepath, contents, 0777)
 }
 
 func (s *Server) handleRemoveAnnouncement(w http.ResponseWriter, req *http.Request) {

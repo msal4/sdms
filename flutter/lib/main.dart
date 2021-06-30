@@ -34,7 +34,7 @@ class _RootState extends State<Root> with TickerProviderStateMixin {
   final _pages = [
     HomePage(),
     GoalsPage(),
-    StaffPage(),
+    LecturersPage(),
     SubjectsPage(),
     AnnouncementsPage()
   ];

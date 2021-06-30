@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:http_parser/http_parser.dart';
 import 'package:sdms/client.dart';
 import 'package:sdms/const.dart';
 import 'package:sdms/models/announcement.dart';
@@ -89,7 +90,9 @@ class _AnnouncementFormPageState extends State<AnnouncementFormPage> {
                 ).toJson();
 
                 if (_imageBytes != null) {
-                  an["Image"] = MultipartFile.fromBytes(_imageBytes!);
+                  an["Image"] = MultipartFile.fromBytes(_imageBytes!,
+                      filename: "image.png",
+                      contentType: MediaType.parse("image/png"));
                 }
 
                 final data = FormData.fromMap(an);

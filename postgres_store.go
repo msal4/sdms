@@ -41,6 +41,32 @@ func (s *PostgresStore) GetSubjects() ([]Subject, error) {
 	return subjects, nil
 }
 
+func (s *PostgresStore) GetSubjectsByLecturerID(id int) ([]Subject, error) {
+	rows, err := s.db.Query(`SELECT subjects.id, subjects.name, details, semester, stage, syllabus, lecturer_id,
+       lecturers.name, lecturers.image, lecturers.username FROM subjects 
+           LEFT JOIN lecturers ON subjects.lecturer_id = lecturers.id WHERE lecturer_id = $1;`, id)
+
+	if err != nil {
+		return nil, fmt.Errorf("error querying subjects: %v", err)
+	}
+
+	subjects := []Subject{}
+	for rows.Next() {
+		subject := Subject{
+			Lecturer: &Lecturer{},
+		}
+
+		err := rows.Scan(&subject.ID, &subject.Name, &subject.Details, &subject.Semester, &subject.Stage, &subject.Syllabus,
+			&subject.Lecturer.ID, &subject.Lecturer.Name, &subject.Lecturer.Image, &subject.Lecturer.Username)
+		if err != nil {
+			return nil, fmt.Errorf("error while scanning row: %v", err)
+		}
+
+		subjects = append(subjects, subject)
+	}
+	return subjects, nil
+}
+
 func (s *PostgresStore) GetSubjectByID(id int) (*Subject, error) {
 	row := s.db.QueryRow("SELECT id, name, details, semester, stage, syllabus, lecturer_id FROM subjects where id = $1", id)
 

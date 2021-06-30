@@ -11,6 +11,10 @@ Future<List<Lecturer>> getLecturers() => client.get("/lecturers").then(
 Future<List<Subject>> getSubjects() => client.get("/subjects").then(
     (value) => (value.data as List).map((i) => Subject.fromJson(i)).toList());
 
+Future<List<Subject>> getSubjectsByLecturerID(int id) =>
+    client.get("/subjects/lecturer/$id").then((value) =>
+        (value.data as List).map((i) => Subject.fromJson(i)).toList());
+
 Future<List<Announcement>> getAnnouncements() =>
     client.get("/announcements").then((value) =>
         (value.data as List).map((i) => Announcement.fromJson(i)).toList());
