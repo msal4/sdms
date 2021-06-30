@@ -47,10 +47,10 @@ type Lecturer struct {
 }
 
 type Announcement struct {
-	ID       int
-	Title     string
-	Image    string
-	Details    string
+	ID      int
+	Title   string
+	Image   string
+	Details string
 }
 
 type AppStore interface {
@@ -202,7 +202,7 @@ func (s *Server) handleAddSubject(w http.ResponseWriter, r *http.Request) {
 	defer syllabusFile.Close()
 
 	contents, err := ioutil.ReadAll(syllabusFile)
-	filepath := path.Join(pdfPath , strconv.Itoa(subject.ID) + ".pdf")
+	filepath := path.Join(pdfPath, strconv.Itoa(subject.ID)+".pdf")
 	os.WriteFile(filepath, contents, 0666)
 }
 
@@ -347,7 +347,7 @@ func (s *Server) handleAnnouncements(w http.ResponseWriter, req *http.Request) {
 
 func (s *Server) handleAddAnnouncement(w http.ResponseWriter, r *http.Request) {
 	announcement := Announcement{
-		Title : r.FormValue("Title"),
+		Title:   r.FormValue("Title"),
 		Details: r.FormValue("Details"),
 	}
 
@@ -367,7 +367,7 @@ func (s *Server) handleAddAnnouncement(w http.ResponseWriter, r *http.Request) {
 	defer imageFile.Close()
 
 	contents, err := ioutil.ReadAll(imageFile)
-	filepath := path.Join(imagesPath , strconv.Itoa(announcement.ID) + ".png")
+	filepath := path.Join(imagesPath, strconv.Itoa(announcement.ID)+".png")
 	os.WriteFile(filepath, contents, 0666)
 }
 
