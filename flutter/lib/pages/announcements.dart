@@ -27,58 +27,63 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
   Widget build(BuildContext context) {
     if (_data == null) return Center(child: CircularProgressIndicator());
 
-    return ListView(
-      padding: const EdgeInsets.all(kDefaultPadding),
-      children: [
-        for (final announcement in _data!)
-          Column(
-            children: [
-              Container(
-                clipBehavior: Clip.antiAlias,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Column(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(kDefaultPadding * 2),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(announcement.title),
-                                SizedBox(height: 10),
-                                Container(
-                                  child: Text(
-                                    announcement.details ?? "...",
-                                    style:
-                                        TextStyle(color: Colors.grey.shade700),
+    return RefreshIndicator(
+      onRefresh: () => getAnnouncements().then((announcements) => setState(() {
+            _data = announcements;
+          })),
+      child: ListView(
+        padding: const EdgeInsets.all(kDefaultPadding),
+        children: [
+          for (final announcement in _data!)
+            Column(
+              children: [
+                Container(
+                  clipBehavior: Clip.antiAlias,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade200,
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(kDefaultPadding * 2),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(announcement.title),
+                                  SizedBox(height: 10),
+                                  Container(
+                                    child: Text(
+                                      announcement.details ?? "...",
+                                      style: TextStyle(
+                                          color: Colors.grey.shade700),
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                          Icon(Icons.notifications),
-                        ],
+                            Icon(Icons.notifications),
+                          ],
+                        ),
                       ),
-                    ),
-                    Image.network(
-                      "http://localhost:5000/storage/images/6.png",
-                      height: 180,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                    )
-                  ],
+                      Image.network(
+                        "http://localhost:5000/storage/images/${announcement.id}.png",
+                        height: 180,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                      )
+                    ],
+                  ),
                 ),
-              ),
-              SizedBox(height: 10),
-            ],
-          ),
-      ],
+                SizedBox(height: 10),
+              ],
+            ),
+        ],
+      ),
     );
   }
 }
