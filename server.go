@@ -4,7 +4,11 @@ package sdms
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"net/http"
+	"os"
+	"path"
 	"strconv"
 
 	"github.com/gorilla/handlers"
@@ -60,6 +64,7 @@ type AppStore interface {
 	AddLecturer(*Lecturer) error
 	UpdateLecturer(Lecturer) error
 	GetLecturerByID(id int) (*Lecturer, error)
+	GetLecturerByUsername(username, password string) (*Lecturer, error)
 	RemoveLecturer(id int) error
 
 	GetAnnouncements() ([]Announcement, error)
@@ -71,6 +76,10 @@ type Server struct {
 	store AppStore
 	http.Handler
 }
+
+const storagePath = "./storage"
+const pdfPath = storagePath + "/pdf"
+const imagesPath = storagePath + "/images"
 
 func NewServer(store AppStore) *Server {
 	s := &Server{store: store}
@@ -89,6 +98,7 @@ func NewServer(store AppStore) *Server {
 	// lecturers
 	apiRouter.Handle("/lecturers", http.HandlerFunc(s.handleLecturers)).Methods(http.MethodGet)
 	apiRouter.Handle("/lecturers", http.HandlerFunc(s.handleAddLecturer)).Methods(http.MethodPost)
+	apiRouter.Handle("/lecturers/username/{username}/{password}", http.HandlerFunc(s.handleGetLecturerByUsername)).Methods(http.MethodGet)
 	apiRouter.Handle("/lecturers/{id:[0-9]+}", http.HandlerFunc(s.handleGetLecturerByID)).Methods(http.MethodGet)
 	apiRouter.Handle("/lecturers/{id:[0-9]+}", http.HandlerFunc(s.handleRemoveLecturer)).Methods(http.MethodDelete)
 	apiRouter.Handle("/lecturers/{id:[0-9]+}", http.HandlerFunc(s.handleUpdateLecturer)).Methods(http.MethodPut)
@@ -97,9 +107,38 @@ func NewServer(store AppStore) *Server {
 	apiRouter.Handle("/announcements", http.HandlerFunc(s.handleAddAnnouncement)).Methods(http.MethodPost)
 	apiRouter.Handle("/announcements/{id:[0-9]+}", http.HandlerFunc(s.handleRemoveAnnouncement)).Methods(http.MethodDelete)
 
-	s.Handler = handlers.CORS()(router)
+	if _, err := os.Stat(storagePath); os.IsNotExist(err) {
+		os.MkdirAll(pdfPath, 0777)
+		os.MkdirAll(imagesPath, 0777)
+	}
+
+	fs := http.FileServer(http.Dir(storagePath))
+	router.PathPrefix("/storage").Handler(http.StripPrefix("/storage", fs))
+
+	allowedMethods := handlers.AllowedMethods([]string{http.MethodGet, http.MethodPut, http.MethodHead, http.MethodPost, http.MethodDelete})
+	allowedHeaders := handlers.AllowedHeaders([]string{"Accept", "Accept-Language", "Content-Language", "Origin", "Content-Type"})
+	s.Handler = handlers.CORS(allowedMethods, allowedHeaders)(router)
 
 	return s
+}
+
+func (s *Server) handleGetLecturerByUsername(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("content-type", "application/json")
+
+	vars := mux.Vars(req)
+	l, err := s.store.GetLecturerByUsername(vars["username"], vars["password"])
+	if err != nil {
+		if err == ErrNotFound {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	b, _ := json.Marshal(l)
+
+	fmt.Fprintf(w, string(b))
 }
 
 func (s *Server) handleGetSubjectByID(w http.ResponseWriter, req *http.Request) {
@@ -139,21 +178,32 @@ func (s *Server) handleSubjects(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (s *Server) handleAddSubject(w http.ResponseWriter, req *http.Request) {
+func (s *Server) handleAddSubject(w http.ResponseWriter, r *http.Request) {
 	var subject Subject
-	err := json.NewDecoder(req.Body).Decode(&subject)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	subject.Lecturer = &Lecturer{}
+	subject.Name = r.FormValue("Name")
+	subject.Details = r.FormValue("Details")
+	subject.Lecturer.ID, _ = strconv.Atoi(r.FormValue("Lecturer"))
+	subject.Semester, _ = strconv.Atoi(r.FormValue("Semester"))
+	subject.Stage, _ = strconv.Atoi(r.FormValue("Stage"))
 
-	if err = s.store.AddSubject(&subject); err != nil {
-		fmt.Fprintf(w, "problem adding subject: %v", err)
+	if err := s.store.AddSubject(&subject); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(w, "problem adding subject: %v", err)
 		return
 	}
 
 	w.WriteHeader(http.StatusAccepted)
+	syllabusFile, _, err := r.FormFile("Syllabus")
+	if err != nil {
+		log.Printf("failed to get form file: %v\n", err)
+		return
+	}
+	defer syllabusFile.Close()
+
+	contents, err := ioutil.ReadAll(syllabusFile)
+	filepath := path.Join(pdfPath , strconv.Itoa(subject.ID) + ".pdf")
+	os.WriteFile(filepath, contents, 0666)
 }
 
 func (s *Server) handleRemoveSubject(w http.ResponseWriter, req *http.Request) {
@@ -295,21 +345,30 @@ func (s *Server) handleAnnouncements(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (s *Server) handleAddAnnouncement(w http.ResponseWriter, req *http.Request) {
-	var announcement Announcement
-	err := json.NewDecoder(req.Body).Decode(&announcement)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+func (s *Server) handleAddAnnouncement(w http.ResponseWriter, r *http.Request) {
+	announcement := Announcement{
+		Title : r.FormValue("Title"),
+		Details: r.FormValue("Details"),
 	}
 
-	if err = s.store.AddAnnouncement(&announcement); err != nil {
+	if err := s.store.AddAnnouncement(&announcement); err != nil {
 		fmt.Fprintf(w, "problem adding announcement: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusAccepted)
+
+	imageFile, _, err := r.FormFile("Image")
+	if err != nil {
+		log.Printf("announcement: failed to get form file: %v\n", err)
+		return
+	}
+	defer imageFile.Close()
+
+	contents, err := ioutil.ReadAll(imageFile)
+	filepath := path.Join(imagesPath , strconv.Itoa(announcement.ID) + ".png")
+	os.WriteFile(filepath, contents, 0666)
 }
 
 func (s *Server) handleRemoveAnnouncement(w http.ResponseWriter, req *http.Request) {

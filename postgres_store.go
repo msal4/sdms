@@ -92,7 +92,7 @@ func (s *PostgresStore) UpdateSubject(subject Subject) error {
 }
 
 func (s *PostgresStore) GetLecturers() ([]Lecturer, error) {
-	rows, err := s.db.Query(`SELECT id, name, image, about, password FROM lecturers;`)
+	rows, err := s.db.Query(`SELECT id, name, username, image, about, password FROM lecturers;`)
 	if err != nil {
 		return nil, fmt.Errorf("error querying lecturers: %v", err)
 	}
@@ -100,7 +100,7 @@ func (s *PostgresStore) GetLecturers() ([]Lecturer, error) {
 	lecturers := []Lecturer{}
 	for rows.Next() {
 		var lecturer Lecturer
-		err := rows.Scan(&lecturer.ID, &lecturer.Name, &lecturer.Image, &lecturer.About, &lecturer.Password)
+		err := rows.Scan(&lecturer.ID, &lecturer.Name, &lecturer.Username, &lecturer.Image, &lecturer.About, &lecturer.Password)
 		if err != nil {
 			return nil, fmt.Errorf("error while scanning row: %v", err)
 		}
@@ -110,12 +110,27 @@ func (s *PostgresStore) GetLecturers() ([]Lecturer, error) {
 	return lecturers, nil
 }
 
+func (s *PostgresStore) GetLecturerByUsername(username, password string) (*Lecturer, error) {
+	row := s.db.QueryRow("SELECT id, name, username, image, about, password FROM lecturers WHERE username = $1 AND password = $2", username, password)
+
+	var lecturer Lecturer
+	err := row.Scan(&lecturer.ID, &lecturer.Name, &lecturer.Username, &lecturer.Image, &lecturer.About, &lecturer.Password)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, ErrNotFound
+		}
+		return nil, fmt.Errorf("encountered error while scanning row: %v", err)
+	}
+
+	return &lecturer, nil
+}
+
 func (s *PostgresStore) GetLecturerByID(id int) (*Lecturer, error) {
-	row := s.db.QueryRow("SELECT id, name, image, about, password FROM lecturers where id = $1", id)
+	row := s.db.QueryRow("SELECT id, name, username, image, about, password FROM lecturers WHERE id = $1", id)
 
 	var lecturer Lecturer
 
-	err := row.Scan(&lecturer.ID, &lecturer.Name, &lecturer.Image, &lecturer.About, &lecturer.Password)
+	err := row.Scan(&lecturer.ID, &lecturer.Name, &lecturer.Username, &lecturer.Image, &lecturer.About, &lecturer.Password)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, ErrNotFound

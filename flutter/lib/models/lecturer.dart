@@ -10,7 +10,7 @@ String lecturerToJson(Lecturer data) => json.encode(data.toJson());
 
 class Lecturer {
   Lecturer({
-    required this.id,
+    this.id,
     required this.name,
     this.image,
     required this.username,
@@ -18,7 +18,7 @@ class Lecturer {
     this.about,
   });
 
-  int id;
+  int? id;
   String name;
   String? image;
   String username;

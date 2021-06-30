@@ -8,22 +8,20 @@ String subjectToJson(Subject data) => json.encode(data.toJson());
 
 class Subject {
   Subject({
-    required this.id,
+    this.id,
     required this.name,
     this.details,
     required this.stage,
-    required this.lecturer,
+    this.lecturer,
     required this.semester,
-    this.syllabus,
   });
 
-  int id;
+  int? id;
   String name;
   String? details;
   int stage;
-  Lecturer lecturer;
+  Lecturer? lecturer;
   int semester;
-  String? syllabus;
 
   factory Subject.fromJson(Map<String, dynamic> json) => Subject(
         id: json["ID"],
@@ -32,7 +30,6 @@ class Subject {
         stage: json["Stage"],
         lecturer: Lecturer.fromJson(json["Lecturer"]),
         semester: json["Semester"],
-        syllabus: json["Syllabus"],
       );
 
   Map<String, dynamic> toJson() => {
@@ -40,8 +37,7 @@ class Subject {
         "Name": name,
         "Details": details,
         "Stage": stage,
-        "Lecturer": lecturer.toJson(),
+        "Lecturer": lecturer?.toJson(),
         "Semester": semester,
-        "Syllabus": syllabus,
       };
 }

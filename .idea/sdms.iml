@@ -5,6 +5,14 @@
     <content url="file://$MODULE_DIR$">
       <excludeFolder url="file://$MODULE_DIR$/flutter/build" />
       <excludeFolder url="file://$MODULE_DIR$/flutter/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/.idea/dataSources" />
+      <excludeFolder url="file://$MODULE_DIR$/flutter/android/app/src/main/java" />
+      <excludeFolder url="file://$MODULE_DIR$/flutter/ios/Runner.xcworkspace/xcuserdata" />
+      <excludeFolder url="file://$MODULE_DIR$/flutter/ios/.symlinks" />
+      <excludeFolder url="file://$MODULE_DIR$/flutter/ios/Pods" />
+      <excludeFolder url="file://$MODULE_DIR$/flutter/.dart_tool" />
+      <excludeFolder url="file://$MODULE_DIR$/flutter/.idea" />
+      <excludeFolder url="file://$MODULE_DIR$/pdf" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

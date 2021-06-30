@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:sdms/pages/announcements.dart';
-import 'package:sdms/pages/goals.dart';
-import 'package:sdms/pages/home.dart';
-import 'package:sdms/pages/staff.dart';
-import 'package:sdms/pages/subjects.dart';
+import 'package:sdms/dashboard/pages/announcements.dart';
+import 'package:sdms/dashboard/pages/lecturers.dart';
+import 'package:sdms/dashboard/pages/login_form.dart';
+import 'package:sdms/dashboard/pages/subjects.dart';
 
 void main() {
   runApp(App());
@@ -14,7 +13,11 @@ class App extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(home: Root());
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData.dark(),
+      home: LoginFormPage(),
+    );
   }
 }
 
@@ -28,13 +31,7 @@ class Root extends StatefulWidget {
 class _RootState extends State<Root> with TickerProviderStateMixin {
   int _currentPage = 0;
 
-  final _pages = [
-    HomePage(),
-    GoalsPage(),
-    StaffPage(),
-    SubjectsPage(),
-    AnnouncementsPage()
-  ];
+  final _pages = [LecturersPage(), SubjectsPage(), AnnouncementsPage()];
 
   get _currentPageWidget => _pages[_currentPage];
 
@@ -67,7 +64,17 @@ class _RootState extends State<Root> with TickerProviderStateMixin {
                             color: Colors.white, fontWeight: FontWeight.bold),
                       ),
                     ),
-                  )
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    left: 100,
+                    child: Image.asset(
+                      "assets/logo.png",
+                      fit: BoxFit.cover,
+                      width: 100,
+                      height: 100,
+                    ),
+                  ),
                 ],
               ),
             ),
