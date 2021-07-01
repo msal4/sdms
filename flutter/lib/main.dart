@@ -15,6 +15,13 @@ class App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      theme: ThemeData(
+          appBarTheme: AppBarTheme(
+            backwardsCompatibility: false,
+            foregroundColor: Colors.black,
+            color: Color(0xffe3feb9),
+          ),
+          colorScheme: ColorScheme.light(primary: Color(0xffe3feb9))),
       debugShowCheckedModeBanner: false,
       home: Root(),
     );
@@ -45,7 +52,9 @@ class _RootState extends State<Root> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_currentPageWidget.title),
+        title: Text(
+          _currentPageWidget.title,
+        ),
       ),
       drawer: Drawer(
         child: ListView(
