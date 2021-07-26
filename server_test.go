@@ -21,6 +21,14 @@ func (s *stubStore) GetSubjects() ([]sdms.Subject, error) {
 	return s.subjects, nil
 }
 
+func (s *stubStore) GetAnnouncements() ([]sdms.Announcement, error) {
+	return nil, nil
+}
+
+func (s *stubStore) AddAnnouncement(announcement *sdms.Announcement) error {
+	return nil
+}
+
 func (s *stubStore) AddSubject(subject *sdms.Subject) error {
 	if subject != nil {
 		s.subjects = append(s.subjects, *subject)

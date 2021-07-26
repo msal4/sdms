@@ -24,7 +24,7 @@ class _GoalsPageState extends State<GoalsPage> {
               SizedBox(width: kDefaultPadding),
               Text("اھداف قسم تكنولوجیا معلومات الاعمال",
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.headline5),
+                  style: Theme.of(context).textTheme.headline6),
             ],
           ),
           Divider(),

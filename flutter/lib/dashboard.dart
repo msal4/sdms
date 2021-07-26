@@ -88,6 +88,13 @@ class _RootState extends State<Root> with TickerProviderStateMixin {
                   Navigator.pop(context);
                 },
               ),
+            ListTile(
+              title: Text("Logout"),
+              onTap: () {
+                Navigator.pushReplacement(context,
+                    MaterialPageRoute(builder: (context) => LoginFormPage()));
+              },
+            ),
           ],
         ),
       ),

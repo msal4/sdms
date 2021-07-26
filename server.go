@@ -303,13 +303,12 @@ func (s *Server) handleAddLecturer(w http.ResponseWriter, req *http.Request) {
 	var lecturer Lecturer
 	err := json.NewDecoder(req.Body).Decode(&lecturer)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	if err = s.store.AddLecturer(&lecturer); err != nil {
-		fmt.Fprintf(w, "problem adding lecturer: %v", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("problem adding lecturer: %v", err), http.StatusInternalServerError)
 		return
 	}
 
