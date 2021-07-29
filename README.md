@@ -1,4 +1,5 @@
-# SDMS
+# SDMS (Scientific Department Management System)
+Proof of concept.
 
 ### Setup
 
